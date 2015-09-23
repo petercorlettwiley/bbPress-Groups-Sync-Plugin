@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: GasPedal bbPress + Groups Integration
-Description: Addon to auto-assign Groups read capabilities to new bbPress threads
+Description: Addon to auto-assign Groups read capabilities to new bbPress topics and replies
 Author: Peter Wiley
 Version: 0.0.1
 */
