@@ -3,61 +3,34 @@
 Plugin Name: GasPedal bbPress + Groups Integration
 Description: Addon to auto-assign Groups read capabilities to new bbPress threads
 Author: Peter Wiley
-Version: 0.0.1
+Version: 0.0.2
 */
 
-function gpbbp_new_topic() {
-  $forum_capabilities = Groups_Post_access::get_read_post_capabilities( bbp_get_forum_id() );
+function gpbbp_apply_capabilities_from_forum($post_id, $forum_id) {
+  $forum_capabilities = Groups_Post_access::get_read_post_capabilities( $forum_id );
+  if( !is_array($forum_capabilities) ) { 
+    return;
+  }
   foreach( $forum_capabilities as $capability ) {
-    Groups_Post_Access::create( array( 'post_id' => bbp_get_topic_id(), 'capability' => $capability ));
+    Groups_Post_Access::create( array( 'post_id' => $post_id, 'capability' => $capability ));
   }
   unset( $capability );
 }
-add_action( 'bbp_theme_before_topic_title', 'gpbbp_new_topic' );
 
-function gpbbp_new_reply() {
-  $forum_capabilities = Groups_Post_access::get_read_post_capabilities( bbp_get_forum_id() );
-  foreach( $forum_capabilities as $capability ) {
-    Groups_Post_Access::create( array( 'post_id' => bbp_get_reply_id(), 'capability' => $capability ));
+function gpbbp_new_post($post_id, $post, $update) {
+  $TOPIC_POST_TYPE = bbp_get_topic_post_type();
+  $REPLY_POST_TYPE = bbp_get_reply_post_type();
+
+  $post_type = get_post_type($post);
+  $forum_id = NULL;
+
+  if($post_type == $TOPIC_POST_TYPE) {
+    $forum_id = bbp_get_forum_id();
+    gpbbp_apply_capabilities_from_forum($post_id, $forum_id);
   }
-  unset( $capability );  
+  if($post_type == $REPLY_POST_TYPE) {
+    $forum_id = bbp_get_forum_id();
+    gpbbp_apply_capabilities_from_forum($post_id, $forum_id);
+  }
 }
-add_action( 'bbp_template_before_single_reply', 'gpbbp_new_reply' );
-
-
-// 
-// THIS WAS USED TO DEBUG SHTUFF
-//
-//function gpbbp_before_topic_title_debug() {
-//
-//  $all_groups = Groups_Group::get_groups();
-//  $a_group = $all_groups[1];
-//  $group_name = $a_group->name;
-//  $group_id = $a_group->id;
-//
-//  $forum_capabilities = Groups_Post_access::get_read_post_capabilities( bbp_get_forum_id() );
-//  $topic_capabilities = Groups_Post_access::get_read_post_capabilities( bbp_get_topic_id() );
-//
-//  echo "<b>f:</b>&nbsp;";
-//  echo bbp_get_forum_id();
-//  echo "&nbsp;//&nbsp;<b>t:</b>&nbsp;";
-//  echo bbp_get_topic_id();
-//  echo "<br><b>fc:</b>&nbsp;";
-//  foreach( $forum_capabilities as &$capability ) {
-//    echo $capability;
-//  }
-//  unset( $capability );
-//  echo "&nbsp;//&nbsp;<b>tc:</b>&nbsp;";
-//  foreach( $topic_capabilities as &$capability ) {
-//    echo $capability;
-//  }
-//  unset( $capability );
-//  echo "<br>";
-//
-//}
-//function gpbbp_topic_id() {
-//  echo bbp_get_topic_id();
-//  echo " ";
-//  echo bbp_get_forum_id();
-//}
-//add_action( 'bbp_theme_before_topic_title', 'gpbbp_before_topic_title_debug' );
+add_action('wp_insert_post', 'gpbbp_new_post', 10, 3);
