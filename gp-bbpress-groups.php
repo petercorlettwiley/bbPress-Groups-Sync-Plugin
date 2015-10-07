@@ -3,7 +3,7 @@
 Plugin Name: GasPedal bbPress + Groups Integration
 Description: Addon to link private bbPress forums to Groups' groups.
 Author: Peter Wiley
-Version: 0.0.4
+Version: 0.0.5
 */
 
 /* ------------------------------ *
@@ -80,6 +80,22 @@ function gpbbp_forum_redirect() {
 }
 add_action('template_redirect', 'gpbbp_forum_redirect');
 
+/* --------------------- *
+ * Forum breadcrumb edit *
+ * --------------------- */
+function gpbbp_breadcrumb_options() {
+  $args['include_home']    = false;
+  $args['include_root']    = false;
+  if ( bbp_is_single_forum() ) {
+    $args['include_current'] = false;
+  } else {
+    $args['include_current'] = true;
+  }
+
+  return $args;
+}
+add_filter('bbp_before_get_breadcrumb_parse_args', 'gpbbp_breadcrumb_options' );
+
 /* --------------------------------------------- *
  * Email notification of new post (via Mandrill) *
  * --------------------------------------------- */
@@ -107,7 +123,7 @@ function gpbbp_new_post_notification( $post_id, $post, $post_type ) {
   $group = new Groups_Group( $group->group_id );
 
   $mandrill_endpoint = 'https://mandrillapp.com/api/1.0/messages/send-template.json';
-  $mandrill_key = 'MANDRILL_KEY';
+  $mandrill_key = 'MANDRILL KEY';
   $mandrill_template = 'new-post-notification';
   $mandrill_merge_vars = array();
   $mandrill_recipients[] = array();
@@ -147,3 +163,12 @@ function gpbbp_new_post_notification( $post_id, $post, $post_type ) {
   $result = curl_exec( $ch );
   curl_close( $ch );
 }
+
+/* ------------------- *
+ * Load JQuery Scripts *
+ * ------------------- */
+function gpbbp_scripts_with_jquery() {
+  wp_register_script( 'main', plugins_url( '/js/main.js', __FILE__ ), array( 'jquery' ) );
+  wp_enqueue_script( 'main' );
+}
+add_action( 'wp_enqueue_scripts', 'gpbbp_scripts_with_jquery' );
