@@ -3,7 +3,7 @@
 Plugin Name: GasPedal bbPress + Groups Integration
 Description: Addon to link private bbPress forums to Groups' groups.
 Author: Peter Wiley
-Version: 0.0.5
+Version: 0.0.6
 */
 
 /* ------------------------------ *
@@ -95,6 +95,39 @@ function gpbbp_breadcrumb_options() {
   return $args;
 }
 add_filter('bbp_before_get_breadcrumb_parse_args', 'gpbbp_breadcrumb_options' );
+
+/* ------------------------
+   Forum Username + Company
+   ------------------------ */
+function gpbbp_get_author_brand( $author_id ) {
+  $author_object = get_userdata( $author_id );
+  $author_brand = $author_object->brand;
+  return $author_brand;
+}
+function gpbbp_display_user_brand_with_username( $author_name, $reply_id ) {
+  $author_id = bbp_get_reply_author_id( $reply_id );
+  $author_brand = gpbbp_get_author_brand( $author_id );
+  $author_name_brand_display = $author_name . '<br>' . $author_brand;
+  return $author_name_brand_display;
+}
+add_filter( 'bbp_get_reply_author_display_name', 'gpbbp_display_user_brand_with_username', 10, 2 );
+
+function gpbbp_display_user_brand_with_username_topic( $author_name, $topic_id ) {
+  $author_id = bbp_get_topic_author_id();
+  $author_brand = gpbbp_get_author_brand( $author_id );
+  $author_name_brand_display = $author_name . '<br>' . $author_brand;
+  return $author_name_brand_display;
+}
+add_filter( 'bbp_get_topic_author_display_name', 'gpbbp_display_user_brand_with_username_topic', 10, 3 );
+
+/* -------------------
+   WYSIWYG TEXT EDITOR
+   ------------------- */
+function gpbbp_enable_visual_editor( $args = array() ) {
+  $args['tinymce'] = true;
+  return $args;
+}
+add_filter( 'bbp_after_get_the_content_parse_args', 'gpbbp_enable_visual_editor' );
 
 /* --------------------------------------------- *
  * Email notification of new post (via Mandrill) *
