@@ -1,0 +1,25 @@
+/* -----------------------------
+   SHOW/HIDE PROFILE EDIT FIELDS
+   ----------------------------- */
+
+/* Edit Profile button on own user's profile */
+body:not(.self) a#edit-profile {
+  display: none;
+}
+
+/* Hiding profile fields on edit profile page */
+body.self .wppb-form-field.wppb-default-username {
+  display: none;
+}
+body.self .wppb-form-field.wppb-default-nickname {
+  display: none;
+}
+body.self .wppb-form-field.wppb-input {
+  display: none;
+}
+body.self .wppb-form-field.wppb-default-display-name-publicly-as {
+  display: none;
+}
+body.self .wppb-form-field.wppb-default-e-mail {
+  display: none;
+}

@@ -3,7 +3,7 @@
 Plugin Name: GasPedal bbPress + Groups Integration
 Description: Addon to link private bbPress forums to Groups' groups.
 Author: Peter Wiley
-Version: 0.0.6
+Version: 0.0.7
 */
 
 /* ------------------------------ *
@@ -120,6 +120,67 @@ function gpbbp_display_user_brand_with_username_topic( $author_name, $topic_id )
 }
 add_filter( 'bbp_get_topic_author_display_name', 'gpbbp_display_user_brand_with_username_topic', 10, 3 );
 
+/* ----------------
+   PROFILE REDIRECT
+   ---------------- */
+function gpbbp_profile_redirect() {
+  if( bbp_is_single_user() ) {
+    $directory_url = '/directory/user';
+    $user_id = bbp_get_user_id();
+    $user_profile_url = home_url() . $directory_url . '/' . $user_id;
+    wp_redirect( $user_profile_url );
+    exit;
+  }
+}
+add_action('template_redirect', 'gpbbp_profile_redirect');
+
+/* -----------------------------
+   SHOW/HIDE PROFILE EDIT FIELDS
+   ----------------------------- */
+// Set url to username
+function wppb_userid_to_username() {
+  return true; 
+}
+add_filter( 'wppb_userlisting_get_user_by_id', 'wppb_userid_to_username' );
+
+// Helper function
+function gpbbp_get_directory_name_from_url($num) {
+  $current_url = $_SERVER['REQUEST_URI'];
+  $current_url_exploded = explode('/', $current_url);
+  $current_url_page = $current_url_exploded[count($current_url_exploded)-$num];
+  return $current_url_page;
+}
+
+// Hide/show fields and edit profile link
+function gpbbp_profile_edit() {
+  $user_url = 'user';
+  $directory_url = 'directory';
+  $edit_url = 'edit-profile';
+  $classes[] = 'self';
+
+  $current_url_page = gpbbp_get_directory_name_from_url(2);
+  $current_page_directory = gpbbp_get_directory_name_from_url(3);
+
+  // Edit Profile button shows up on own user's profile
+  if ( $current_url_page == get_current_user_id() && $current_page_directory == $user_url ) {
+    return $classes;
+  }
+  // Hide edit profile fields on /directory/edit-profile
+  if ( $current_url_page == $edit_url && $current_page_directory == $directory_url ) {
+    return $classes;
+  }
+
+}
+add_action('body_class', 'gpbbp_profile_edit');
+
+// Show 'View My Profile' link
+function gpbbp_view_profile_link($content){
+  $view_profile_url = '/directory/user/' . get_current_user_id();
+  $view_profile_link = '<a href="' . $view_profile_url . '">View My Profile</a>';
+  return $view_profile_link;
+}
+add_filter('wppb_after_form_fields', 'gpbbp_view_profile_link');
+
 /* -------------------
    WYSIWYG TEXT EDITOR
    ------------------- */
@@ -148,8 +209,7 @@ function gpbbp_new_post_notification( $post_id, $post, $post_type ) {
     'author_username'=> $post_author->display_name,
     'body' => $post->post_content,
     'permalink' => $post_is_reply ? get_permalink( bbp_get_topic_id() ) . "#post-$post_id" : get_permalink( $post_id ),
-    //'mutelink' => "mute link"
-    // need to add: 'user_slug' => home_url() . '/discussions/user/' . $post->post_author;
+    'user_slug' => home_url() . '/directory/user/' . $post->post_author
   );
 
   $group = Groups_Group::read_by_name( $post_forum_title );
@@ -157,7 +217,7 @@ function gpbbp_new_post_notification( $post_id, $post, $post_type ) {
 
   $mandrill_endpoint = 'https://mandrillapp.com/api/1.0/messages/send-template.json';
   $mandrill_key = 'MANDRILL KEY';
-  $mandrill_template = 'new-post-notification';
+  $mandrill_template = 'new-post-notification-backup-mc-version-1';
   $mandrill_merge_vars = array();
   $mandrill_recipients[] = array();
 
@@ -204,4 +264,9 @@ function gpbbp_scripts_with_jquery() {
   wp_register_script( 'main', plugins_url( '/js/main.js', __FILE__ ), array( 'jquery' ) );
   wp_enqueue_script( 'main' );
 }
+function gpbbp_stylesheet() {
+  wp_register_style( 'style', plugins_url('/css/style.css', __FILE__) );
+  wp_enqueue_style( 'style' );
+}
 add_action( 'wp_enqueue_scripts', 'gpbbp_scripts_with_jquery' );
+add_action( 'wp_enqueue_scripts', 'gpbbp_stylesheet' );
