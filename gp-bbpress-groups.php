@@ -3,7 +3,7 @@
 Plugin Name: GasPedal bbPress + Groups Integration
 Description: Addon to link private bbPress forums to Groups' groups.
 Author: Peter Wiley
-Version: 0.0.7
+Version: 0.0.8
 */
 
 /* ------------------------------ *
@@ -199,7 +199,7 @@ function gpbbp_new_post_notification( $post_id, $post, $post_type ) {
   $post_author = get_user_by( 'id', $post->post_author );
   $post_forum_title = bbp_get_forum_title( $forum_id );
   $post_info = array(
-    'topic' => $post_topic,
+    'topic' => htmlspecialchars_decode($post_topic, ENT_QUOTES),
     'topic_id' => bbp_get_topic_id(),
     'category' => $post_forum_title,
     'category_id' => $forum_id,
@@ -222,10 +222,12 @@ function gpbbp_new_post_notification( $post_id, $post, $post_type ) {
   $mandrill_recipients[] = array();
 
   foreach( $group->users as $group_member ) {
-    $mandrill_recipients[] = array(
-      'email' => $group_member->user->user_email,
-      'name' => $group_member->user->display_name
-    );
+    if ( $group_member->user->ID != bbp_get_user_id() ) {
+      $mandrill_recipients[] = array(
+        'email' => $group_member->user->user_email,
+        'name' => $group_member->user->display_name
+      );
+    }
   }
 
   // Set up merge vars
