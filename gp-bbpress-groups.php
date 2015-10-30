@@ -3,7 +3,7 @@
 Plugin Name: GasPedal bbPress + Groups Integration
 Description: Addon to link private bbPress forums to Groups' groups.
 Author: Peter Wiley
-Version: 0.0.8
+Version: 0.0.9
 */
 
 /* ------------------------------ *
@@ -189,6 +189,32 @@ function gpbbp_enable_visual_editor( $args = array() ) {
   return $args;
 }
 add_filter( 'bbp_after_get_the_content_parse_args', 'gpbbp_enable_visual_editor' );
+
+/* --------------------------
+   REMOVE GRAVATAR CONNECTION
+   -------------------------- */
+function gpbbp_remove_gravatar ($avatar, $id_or_email, $size, $default) {
+  $default = plugins_url() . '/gp-bbpress-groups/images/avatar-default.jpg';
+  return '<img src="' . $default . '" alt="avatar" class="avatar"/>';
+}
+add_filter('get_avatar', 'gpbbp_remove_gravatar', 1, 5);
+
+/* ------
+   SEARCH
+   ------ */
+/* Include bbPress 'topic' custom post type in WordPress' search results */
+function gpbbp_topic_search( $topic_search ) {
+  $topic_search['exclude_from_search'] = false;
+  return $topic_search;
+}
+add_filter( 'bbp_register_topic_post_type', 'gpbbp_topic_search' );
+
+/* Include bbPress 'reply' custom post type in WordPress' search results */
+function gpbbp_reply_search( $reply_search ) {
+  $reply_search['exclude_from_search'] = false;
+  return $reply_search;
+}
+add_filter( 'bbp_register_reply_post_type', 'gpbbp_reply_search' );
 
 /* --------------------------------------------- *
  * Email notification of new post (via Mandrill) *

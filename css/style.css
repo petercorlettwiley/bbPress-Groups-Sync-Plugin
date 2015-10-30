@@ -23,3 +23,8 @@ body.self .wppb-form-field.wppb-default-display-name-publicly-as {
 body.self .wppb-form-field.wppb-default-e-mail {
   display: none;
 }
+
+/* Avatar size control (TEMPORARY) */
+.wppb-avatar .avatar, .entry-content .avatar {
+  max-width: 40px;
+}
