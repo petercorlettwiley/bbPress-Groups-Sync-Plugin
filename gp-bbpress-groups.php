@@ -229,6 +229,7 @@ function gpbbp_new_post_notification( $post_id, $post, $post_type ) {
     'topic_id' => bbp_get_topic_id(),
     'category' => $post_forum_title,
     'category_id' => $forum_id,
+    'category_slug' => str_replace(' ', '', $post_forum_title),
     'is_reply' => $post_is_reply,
     'author' => "$post_author->first_name $post_author->last_name",
     'author_brand' => $post_author->brand,
