@@ -3,7 +3,7 @@
 Plugin Name: GasPedal bbPress + Groups Integration
 Description: Addon to link private bbPress forums to Groups' groups.
 Author: Peter Wiley
-Version: 0.0.10
+Version: 0.0.11
 */
 
 
@@ -33,7 +33,7 @@ function gpbbp_new_post( $post_id, $post, $update ) {
   $forum_id = NULL;
 
   if( $post_type == $TOPIC_POST_TYPE ) {
-    $forum_id = bbp_get_forum_id();
+    $forum_id = wp_get_post_parent_id( $post_id );
     gpbbp_apply_capabilities_from_forum($post_id, $forum_id);
   }
   if( $post_type == $REPLY_POST_TYPE ) {
@@ -106,9 +106,9 @@ add_filter('bbp_before_get_breadcrumb_parse_args', 'gpbbp_breadcrumb_options' );
 
 
 
-/* ------------------------
-   Forum Username + Company
-   ------------------------ */
+/* ------------------------ *
+ * Forum Username + Company *
+ * ------------------------ */
 
 function gpbbp_get_author_brand( $author_id ) {
   $author_object = get_userdata( $author_id );
@@ -133,9 +133,9 @@ add_filter( 'bbp_get_topic_author_display_name', 'gpbbp_display_user_brand_with_
 
 
 
-/* ----------------
-   PROFILE REDIRECT
-   ---------------- */
+/* ---------------- *
+ * PROFILE REDIRECT *
+ * ---------------- */
 
 function gpbbp_profile_redirect() {
   if( bbp_is_single_user() ) {
@@ -150,9 +150,9 @@ add_action('template_redirect', 'gpbbp_profile_redirect');
 
 
 
-/* -----------------------------
-   SHOW/HIDE PROFILE EDIT FIELDS
-   ----------------------------- */
+/* ----------------------------- *
+ * SHOW/HIDE PROFILE EDIT FIELDS *
+ * ----------------------------- */
 
 // Set url to username
 function wppb_userid_to_username() {
@@ -200,9 +200,9 @@ add_filter('wppb_after_form_fields', 'gpbbp_view_profile_link');
 
 
 
-/* -------------------
-   WYSIWYG TEXT EDITOR
-   ------------------- */
+/* ------------------- *
+ * WYSIWYG TEXT EDITOR *
+ * ------------------- */
 
 function gpbbp_enable_visual_editor( $args = array() ) {
   $args['tinymce'] = true;
@@ -212,9 +212,9 @@ add_filter( 'bbp_after_get_the_content_parse_args', 'gpbbp_enable_visual_editor'
 
 
 
-/* --------------------------
-   NEW TOPIC FORM ON HOMEPAGE
-   -------------------------- */
+/* -------------------------- *
+ * NEW TOPIC FORM ON HOMEPAGE *
+ * -------------------------- */
 
 // Utility: Get forum ID from slug
 function gpbbp_get_forum_id_from_slug( $slug ) {
@@ -264,9 +264,9 @@ add_action('bbp_theme_after_topic_form_forum', 'gpbbp_topic_form_hide_forum_sele
 
 
 
-/* --------------------------
-   REMOVE GRAVATAR CONNECTION
-   -------------------------- */
+/* -------------------------- *
+ * REMOVE GRAVATAR CONNECTION *
+ * -------------------------- */
 
 function gpbbp_remove_gravatar ($avatar, $id_or_email, $size, $default) {
   $default = plugins_url() . '/gp-bbpress-groups/images/avatar-default.png';
@@ -276,9 +276,9 @@ add_filter('get_avatar', 'gpbbp_remove_gravatar', 1, 5);
 
 
 
-/* ------
-   SEARCH
-   ------ */
+/* ------ *
+ * SEARCH *
+ * ------ */
 
 /* Include bbPress 'topic' custom post type in WordPress' search results */
 function gpbbp_topic_search( $topic_search ) {
@@ -296,9 +296,9 @@ add_filter( 'bbp_register_reply_post_type', 'gpbbp_reply_search' );
 
 
 
-/* ---------------------
-   COUNCIL LOGO REDIRECT
-   --------------------- */
+/* --------------------- *
+ * COUNCIL LOGO REDIRECT *
+ * --------------------- */
 
 // Logo redirect logic
 function gpbbp_council_logo_handle_request() {
