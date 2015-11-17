@@ -1,3 +1,11 @@
+/* ------------------------------------------
+   SHOW/HIDE FORUM DROPDOWN ON NEW TOPIC FORM
+   ------------------------------------------ */
+/* Hide */
+.hidden {
+  display: none;
+}
+
 /* -----------------------------
    SHOW/HIDE PROFILE EDIT FIELDS
    ----------------------------- */
@@ -25,6 +33,6 @@ body.self .wppb-form-field.wppb-default-e-mail {
 }
 
 /* Avatar size control (TEMPORARY) */
-.wppb-avatar .avatar, .entry-content .avatar {
+.wppb-avatar .avatar, .entry-content .avatar, #bbpress-forums img.avatar {
   max-width: 40px;
 }

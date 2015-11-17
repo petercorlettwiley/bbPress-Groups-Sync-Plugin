@@ -3,12 +3,15 @@
 Plugin Name: GasPedal bbPress + Groups Integration
 Description: Addon to link private bbPress forums to Groups' groups.
 Author: Peter Wiley
-Version: 0.0.9
+Version: 0.0.10
 */
+
+
 
 /* ------------------------------ *
  * Forum post permission handling *
  * ------------------------------ */
+
 function gpbbp_apply_capabilities_from_forum( $post_id, $forum_id ) {
   $forum_capabilities = Groups_Post_access::get_read_post_capabilities( $forum_id );
 
@@ -42,9 +45,12 @@ function gpbbp_new_post( $post_id, $post, $update ) {
 }
 add_action( 'wp_insert_post', 'gpbbp_new_post', 10, 3 );
 
+
+
 /* ------------------------------------ *
  * Forum redirect based on capabilities *
  * ------------------------------------ */
+
 function find_all_groups_for_user( $user_id ) {
   $result = array();
 
@@ -54,7 +60,6 @@ function find_all_groups_for_user( $user_id ) {
   // Iterate, find what capabilites the user has
   foreach( $all_groups as $group ) {
     $OK = Groups_User_Group::read( $user_id, $group->group_id );
-
     if( $OK ) {
       $result[] = $group;
     }
@@ -80,9 +85,12 @@ function gpbbp_forum_redirect() {
 }
 add_action('template_redirect', 'gpbbp_forum_redirect');
 
+
+
 /* --------------------- *
  * Forum breadcrumb edit *
  * --------------------- */
+
 function gpbbp_breadcrumb_options() {
   $args['include_home']    = false;
   $args['include_root']    = false;
@@ -96,9 +104,12 @@ function gpbbp_breadcrumb_options() {
 }
 add_filter('bbp_before_get_breadcrumb_parse_args', 'gpbbp_breadcrumb_options' );
 
+
+
 /* ------------------------
    Forum Username + Company
    ------------------------ */
+
 function gpbbp_get_author_brand( $author_id ) {
   $author_object = get_userdata( $author_id );
   $author_brand = $author_object->brand;
@@ -120,9 +131,12 @@ function gpbbp_display_user_brand_with_username_topic( $author_name, $topic_id )
 }
 add_filter( 'bbp_get_topic_author_display_name', 'gpbbp_display_user_brand_with_username_topic', 10, 3 );
 
+
+
 /* ----------------
    PROFILE REDIRECT
    ---------------- */
+
 function gpbbp_profile_redirect() {
   if( bbp_is_single_user() ) {
     $directory_url = '/directory/user';
@@ -134,9 +148,12 @@ function gpbbp_profile_redirect() {
 }
 add_action('template_redirect', 'gpbbp_profile_redirect');
 
+
+
 /* -----------------------------
    SHOW/HIDE PROFILE EDIT FIELDS
    ----------------------------- */
+
 // Set url to username
 function wppb_userid_to_username() {
   return true; 
@@ -181,27 +198,88 @@ function gpbbp_view_profile_link($content){
 }
 add_filter('wppb_after_form_fields', 'gpbbp_view_profile_link');
 
+
+
 /* -------------------
    WYSIWYG TEXT EDITOR
    ------------------- */
+
 function gpbbp_enable_visual_editor( $args = array() ) {
   $args['tinymce'] = true;
   return $args;
 }
 add_filter( 'bbp_after_get_the_content_parse_args', 'gpbbp_enable_visual_editor' );
 
+
+
+/* --------------------------
+   NEW TOPIC FORM ON HOMEPAGE
+   -------------------------- */
+
+// Utility: Get forum ID from slug
+function gpbbp_get_forum_id_from_slug( $slug ) {
+  $args=array(
+    'name' => $slug,
+    'post_type' => 'forum',
+    'caller_get_posts'=> 1
+  );
+  $my_posts = get_posts($args);
+  if( $my_posts ) {
+    return $my_posts[0]->ID;
+  }
+}
+// Reset permissions to allow form visibility
+function gpbbp_access_topic_form( $retval ) {
+  $retval = bbp_current_user_can_publish_topics();
+  return $retval;
+}
+add_filter( 'bbp_current_user_can_access_create_topic_form', 'gpbbp_access_topic_form' );
+
+// Select correct forum from dropdown
+function gpbbp_select_user_forum() {
+  $user_groups = find_all_groups_for_user( get_current_user_id() );
+  $group = $user_groups[1];
+  $group_slug = preg_replace( '/\s/', '-', $group->name );
+  return gpbbp_get_forum_id_from_slug($group_slug);
+}
+add_filter( 'bbp_get_form_topic_forum', 'gpbbp_select_user_forum' );
+
+// If user belongs to 2 groups (implying they're a member), add an open 'hidden' div tag before the forum dropdown
+function gpbbp_topic_form_hide_forum_select_before() {
+  $user_groups = find_all_groups_for_user( get_current_user_id() );
+  if( count($user_groups) == 2 ) {
+    echo "<div class='hidden'>";
+  }
+}
+add_action('bbp_theme_before_topic_form_forum', 'gpbbp_topic_form_hide_forum_select_before');
+
+// After dropdown, close 'hidden' div
+function gpbbp_topic_form_hide_forum_select_after() {
+  $user_groups = find_all_groups_for_user( get_current_user_id() );
+  if( count($user_groups) == 2 ) {
+    echo "</div>";
+  }
+}
+add_action('bbp_theme_after_topic_form_forum', 'gpbbp_topic_form_hide_forum_select_after');
+
+
+
 /* --------------------------
    REMOVE GRAVATAR CONNECTION
    -------------------------- */
+
 function gpbbp_remove_gravatar ($avatar, $id_or_email, $size, $default) {
-  $default = plugins_url() . '/gp-bbpress-groups/images/avatar-default.jpg';
+  $default = plugins_url() . '/gp-bbpress-groups/images/avatar-default.png';
   return '<img src="' . $default . '" alt="avatar" class="avatar"/>';
 }
 add_filter('get_avatar', 'gpbbp_remove_gravatar', 1, 5);
 
+
+
 /* ------
    SEARCH
    ------ */
+
 /* Include bbPress 'topic' custom post type in WordPress' search results */
 function gpbbp_topic_search( $topic_search ) {
   $topic_search['exclude_from_search'] = false;
@@ -216,9 +294,60 @@ function gpbbp_reply_search( $reply_search ) {
 }
 add_filter( 'bbp_register_reply_post_type', 'gpbbp_reply_search' );
 
+
+
+/* ---------------------
+   COUNCIL LOGO REDIRECT
+   --------------------- */
+
+// Logo redirect logic
+function gpbbp_council_logo_handle_request() {
+  $user_groups = find_all_groups_for_user( get_current_user_id() );
+
+    // If user belongs to two groups (one is always 'Registered'), then the second must be a Council group
+    if( count($user_groups) == 2 ) {
+      $group = $user_groups[1];
+      $logo_name = preg_replace( '/\s/', '', $group->name );
+    } else {
+      if ( count($user_groups) > 2 && count($user_groups) < 6 ) {
+        $logo_name = 'Moderator';
+      } else {
+        $logo_name = 'Admin';
+      }
+    }
+
+  $base_url = get_site_url();
+  wp_redirect( "$base_url/discourse/council-logo-$logo_name.svg");
+  exit();
+}
+
+function gpbbp_parse_request(){
+  global $wp;
+
+  // Watch for the council logo query
+  $param = '__get_council_logo';
+  if(isset($wp->query_vars[$param])){
+    gpbbp_council_logo_handle_request();
+    exit;
+  }
+}
+add_action('parse_request', 'gpbbp_parse_request', 0);
+
+// Just use /index.php?__get_council_logo=1 to get logo
+function gpbbp_add_query_vars($vars){
+  $param = '__get_council_logo';
+  $vars[] = $param;
+
+  return $vars;
+}
+add_filter('query_vars', 'gpbbp_add_query_vars', 0);
+
+
+
 /* --------------------------------------------- *
  * Email notification of new post (via Mandrill) *
  * --------------------------------------------- */
+
 function gpbbp_new_post_notification( $post_id, $post, $post_type ) {
   $post_is_reply = ( $post_type == bbp_get_reply_post_type() ) ? true : false;
   $post_topic = $post_is_reply ? get_post( bbp_get_topic_id() )->post_title : $post->post_title;
@@ -249,7 +378,7 @@ function gpbbp_new_post_notification( $post_id, $post, $post_type ) {
   $mandrill_recipients[] = array();
 
   foreach( $group->users as $group_member ) {
-    if ( $group_member->user->ID != bbp_get_user_id() ) {
+    if ( $group_member->user->ID != $post->post_author ) {
       $mandrill_recipients[] = array(
         'email' => $group_member->user->user_email,
         'name' => $group_member->user->display_name
@@ -286,15 +415,18 @@ function gpbbp_new_post_notification( $post_id, $post, $post_type ) {
   curl_close( $ch );
 }
 
+
+
 /* ------------------- *
  * Load JQuery Scripts *
  * ------------------- */
+
 function gpbbp_scripts_with_jquery() {
   wp_register_script( 'main', plugins_url( '/js/main.js', __FILE__ ), array( 'jquery' ) );
   wp_enqueue_script( 'main' );
 }
 function gpbbp_stylesheet() {
-  wp_register_style( 'style', plugins_url('/css/style.css', __FILE__) );
+  wp_register_style( 'style', plugins_url( '/css/style.css', __FILE__ ) );
   wp_enqueue_style( 'style' );
 }
 add_action( 'wp_enqueue_scripts', 'gpbbp_scripts_with_jquery' );
